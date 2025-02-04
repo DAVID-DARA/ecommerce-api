@@ -1,6 +1,6 @@
 package com.project.ecommerce_api.controllers;
 
-import com.project.ecommerce_api.models.authDto.response.CustomResponse;
+import com.project.ecommerce_api.models.auth.response.CustomResponse;
 import com.project.ecommerce_api.services.CategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

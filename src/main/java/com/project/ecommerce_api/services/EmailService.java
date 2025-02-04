@@ -1,5 +1,6 @@
 package com.project.ecommerce_api.services;
 
+import com.project.ecommerce_api.utilities.EmailType;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Service;
 public class EmailService {
     private final JavaMailSender javaMailSender;
 
-    private static final String emailBody = """
+    private static final String welcomeEmailBody = """
             <!DOCTYPE html>
             <html>
             <head>
@@ -180,18 +181,127 @@ public class EmailService {
             </body>
             </html>""";
 
-    public void sendWelcomeEmail(String to, String userName, String token) throws MessagingException {
+    private static final String resendOtpEmailBody = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+                <meta http-equiv="X-UA-Compatible" content="IE=edge">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title></title>
+                <!--[if !mso]><!-->
+                <style type="text/css">
+                    @import url('https://fonts.mailersend.com/css?family=Inter:400,600');
+                </style>
+                <!--<![endif]-->
+                <style type="text/css" rel="stylesheet" media="all">
+                    @media only screen and (max-width: 640px) {
+                        .ms-header { display: none !important; }
+                        .ms-content { width: 100% !important; border-radius: 0; }
+                        .ms-content-body { padding: 30px !important; }
+                        .ms-footer { width: 100% !important; }
+                    }
+                </style>
+            </head>
+            <body style="font-family:'Inter', Helvetica, Arial, sans-serif; width: 100% !important; height: 100%; margin: 0; padding: 0; -webkit-text-size-adjust: none; background-color: #f4f7fa; color: #4a5566;">
+                <div class="preheader" style="display:none !important;visibility:hidden;mso-hide:all;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;"></div>
+                <table class="ms-body" width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#f4f7fa;width:100%;margin:0;padding:0;">
+                    <tr>
+                        <td align="center" style="font-family:'Inter', Helvetica, Arial, sans-serif;font-size:16px;line-height:24px;">
+                            <table class="ms-container" width="100%" cellpadding="0" cellspacing="0" style="width:100%;margin:0;padding:0;">
+                                <tr>
+                                    <td align="center" style="font-family:'Inter', Helvetica, Arial, sans-serif;font-size:16px;line-height:24px;">
+                                        <table class="ms-content" width="640" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#FFFFFF;border-radius:6px;box-shadow:0 3px 6px 0 rgba(0,0,0,.05);margin:auto;padding:0;">
+                                            <tr>
+                                                <td class="ms-content-body" style="font-family:'Inter', Helvetica, Arial, sans-serif;font-size:16px;line-height:24px;padding:40px 50px;">
+                                                    <p class="logo" style="text-align:center;font-weight:600;font-size:21px;color:#111111;margin-bottom:40px;">
+                                                        <span style="color:#0052e2;font-family:Arial, Helvetica, sans-serif;font-size:30px;vertical-align:bottom;">❖&nbsp;</span>LOREM
+                                                    </p>
+                                                    <h1 style="color:#111111;font-size:24px;line-height:36px;font-weight:600;margin-bottom:24px;">Hello, {$name}!</h1>
+                                                    <p style="color:#4a5566;font-size:16px;line-height:28px;margin:20px 0;">
+                                                        We noticed you requested to resend your OTP. Here is your new OTP for verification:
+                                                    </p>
+                                                    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse;">
+                                                        <tr>
+                                                            <td class="info" style="background-color:#f4f7fa;border-radius:4px;padding:20px;">
+                                                                <strong style="font-weight:600;">OTP:</strong> {$otp}
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                    <p style="color:#4a5566;font-size:16px;line-height:28px;margin:20px 0;">
+                                                        Please use this OTP within the next 10 minutes to complete your verification process.
+                                                    </p>
+                                                    <p style="color:#4a5566;font-size:16px;line-height:28px;margin:20px 0;">
+                                                        Cheers,<br>Dara and the LOREM Team
+                                                    </p>
+                                                    <p style="color:#4a5566;font-size:16px;line-height:28px;margin:20px 0;">
+                                                        <strong style="font-weight:600;">P.S.</strong> Need help? Visit our <a href="{$help_url}" style="color:#0052e2;">support page</a>.
+                                                    </p>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td align="center" style="font-family:'Inter', Helvetica, Arial, sans-serif;font-size:16px;line-height:24px;">
+                                                    <table class="ms-footer" width="640" cellpadding="0" cellspacing="0" role="presentation" style="width:640px;margin:auto;padding:40px 50px;">
+                                                        <tr>
+                                                            <td class="ms-content-body" align="center" style="font-family:'Inter', Helvetica, Arial, sans-serif;font-size:16px;line-height:24px;">
+                                                                <p class="small" style="color:#96a2b3;font-size:14px;line-height:21px;">
+                                                                    &copy; 2024 LOREM. All rights reserved.
+                                                                </p>
+                                                                <p class="small" style="color:#96a2b3;font-size:14px;line-height:21px;">
+                                                                    1234 Street Rd.<br>Suite 1234<br>City, State, ZIP Code
+                                                                </p>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </body>
+            </html>
+            """;
+
+    public void sendEmail(String to, String userName, String token, EmailType emailType) throws MessagingException {
+        String finalMailContent = "";
+        String subject = "";
+
+        finalMailContent += resendOtpEmailBody.replace("{$name}", userName).replace("{$otp}", token).replace("{$help_url}", "https://example.com/support");
+
+        if (emailType == EmailType.EMAIL_VERIFICATION)
+            subject += "Verify Email";
+        else if (emailType == EmailType.PASSWORD_RESET)
+            subject += "Request for OTP";
+
         jakarta.mail.internet.MimeMessage message = javaMailSender.createMimeMessage();
-
-        String subject = "Welcome to Our Service!";
-
-        String finalEmailContent = emailBody.replace("{$name}", userName).replace("{$otp}", token).replace("{$help_url}", "google.com");
 
         message.setFrom("no-reply@lorem.com");
         message.setRecipients(MimeMessage.RecipientType.TO, to);
         message.setSubject(subject);
-        message.setContent(finalEmailContent, "text/html; charset=utf-8");
+        message.setContent(finalMailContent, "text/html; charset=utf-8");
 
         javaMailSender.send(message);
     }
+
+    public void sendWelcomeEmail(String to, String userName, String token) throws MessagingException {
+        String finalMailContent = "";
+        String subject = "";
+
+        subject += "Welcome to Our Service";
+        finalMailContent += welcomeEmailBody.replace("{$name}", userName).replace("{$otp}", token).replace("{$help_url}", "https://example.com/support");
+
+        jakarta.mail.internet.MimeMessage message = javaMailSender.createMimeMessage();
+
+        message.setFrom("no-reply@lorem.com");
+        message.setRecipients(MimeMessage.RecipientType.TO, to);
+        message.setSubject(subject);
+        message.setContent(finalMailContent, "text/html; charset=utf-8");
+
+        javaMailSender.send(message);
+    }
+
 }

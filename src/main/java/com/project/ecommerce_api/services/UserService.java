@@ -5,8 +5,7 @@ import com.project.ecommerce_api.exceptions.CustomException;
 import com.project.ecommerce_api.helpers.ResponseUtil;
 import com.project.ecommerce_api.models.user.UpdateUserProfileDto;
 import com.project.ecommerce_api.models.UserInfo;
-import com.project.ecommerce_api.models.authDto.response.CustomResponse;
-import com.project.ecommerce_api.repositories.TokenRepository;
+import com.project.ecommerce_api.models.auth.response.CustomResponse;
 import com.project.ecommerce_api.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -29,16 +28,16 @@ public class UserService {
     public CustomResponse<UserInfo> getUserDetails (UUID id) {
         CustomResponse<UserInfo> userResponse = new CustomResponse<>();
 
-        Optional<User> userOptional = userRepository.findByUserId(id);
+        Optional<User> userOptional = userRepository.findById(id);
         if (userOptional.isEmpty()) {
             return ResponseUtil.createErrorResponse(userResponse, HttpStatus.NOT_FOUND, "user not found");
         }
         User user = userOptional.get();
 
         UserInfo userInfo = UserInfo.builder()
-                .id(user.getUserId())
-                .first_name(user.getFirst_name())
-                .last_name(user.getLast_name())
+                .id(user.getId())
+                .first_name(user.getFirstName())
+                .last_name(user.getLastName())
                 .email(user.getEmail())
                 .isVerified(user.getIsVerified())
                 .build();
@@ -54,24 +53,24 @@ public class UserService {
         CustomResponse<UserInfo> response = new CustomResponse<>();
         UserInfo updatedInfo;
 
-        Optional<User> userOptional = userRepository.findByUserId(id);
+        Optional<User> userOptional = userRepository.findById(id);
         if (userOptional.isEmpty()) {
             return ResponseUtil.createErrorResponse(response, HttpStatus.NOT_FOUND, "User not found");
         }
         User requiredUser = userOptional.get();
 
-        requiredUser.setFirst_name(updateInfo.getFirst_name());
-        requiredUser.setLast_name(updateInfo.getLast_name());
-        requiredUser.setPhone_number(updateInfo.getPhone_number());
+        requiredUser.setFirstName(updateInfo.getFirst_name());
+        requiredUser.setLastName(updateInfo.getLast_name());
+        requiredUser.setPhoneNumber(updateInfo.getPhone_number());
         requiredUser.setUpdatedAt(LocalDateTime.now());
 
         try {
             userRepository.save(requiredUser);
 
             updatedInfo = UserInfo.builder()
-                .id(requiredUser.getUserId())
-                .first_name(requiredUser.getFirst_name())
-                .last_name(requiredUser.getLast_name())
+                .id(requiredUser.getId())
+                .first_name(requiredUser.getFirstName())
+                .last_name(requiredUser.getLastName())
                 .email(requiredUser.getEmail())
                 .isVerified(requiredUser.getIsVerified())
                 .build();
@@ -81,7 +80,7 @@ public class UserService {
             response.setMessage("update successful");
             response.setData(updatedInfo);
 
-            logger.info("Successfully updated user: {}", requiredUser.getUserId());
+            logger.info("Successfully updated user: {}", requiredUser.getId());
         } catch (Exception e) {
             logger.error("Error updating user: ", e);
             throw new CustomException("Error updating user");

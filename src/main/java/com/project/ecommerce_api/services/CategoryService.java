@@ -6,7 +6,7 @@ import com.project.ecommerce_api.helpers.ResponseUtil;
 import com.project.ecommerce_api.models.category.CategoryInfo;
 import com.project.ecommerce_api.models.category.CreateCategoryDto;
 import com.project.ecommerce_api.models.category.UpdateCategoryDto;
-import com.project.ecommerce_api.models.authDto.response.CustomResponse;
+import com.project.ecommerce_api.models.auth.response.CustomResponse;
 import com.project.ecommerce_api.repositories.CategoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;

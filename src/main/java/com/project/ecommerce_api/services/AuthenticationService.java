@@ -9,21 +9,25 @@ import com.project.ecommerce_api.helpers.ResponseUtil;
 import com.project.ecommerce_api.helpers.TokenGenerator;
 import com.project.ecommerce_api.models.JwtAuthenticationResponse;
 import com.project.ecommerce_api.models.UserInfo;
-import com.project.ecommerce_api.models.authDto.request.LoginUserDto;
-import com.project.ecommerce_api.models.authDto.request.RegisterUserDto;
-import com.project.ecommerce_api.models.authDto.request.VerifyUserDto;
-import com.project.ecommerce_api.models.authDto.response.CustomResponse;
-import com.project.ecommerce_api.models.authDto.response.LoginResponse;
-import com.project.ecommerce_api.models.authDto.response.VerificationResponse;
-import com.project.ecommerce_api.models.authDto.response.SignupResponse;
+import com.project.ecommerce_api.models.auth.request.LoginUserDto;
+import com.project.ecommerce_api.models.auth.request.RegisterUserDto;
+import com.project.ecommerce_api.models.auth.request.ResendOtpDto;
+import com.project.ecommerce_api.models.auth.request.VerifyUserDto;
+import com.project.ecommerce_api.models.auth.response.CustomResponse;
+import com.project.ecommerce_api.models.auth.response.LoginResponse;
+import com.project.ecommerce_api.models.auth.response.VerificationResponse;
+import com.project.ecommerce_api.models.auth.response.SignupResponse;
 import com.project.ecommerce_api.repositories.RoleRepository;
 import com.project.ecommerce_api.repositories.TokenRepository;
 import com.project.ecommerce_api.repositories.UserRepository;
+import com.project.ecommerce_api.utilities.EmailType;
 import com.project.ecommerce_api.utilities.RoleEnum;
 import com.project.ecommerce_api.utilities.TokenType;
 
 //Spring Classes
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -38,6 +42,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -73,9 +78,9 @@ public class AuthenticationService {
 
 
         // Set user details
-        user.setFirst_name(userInput.getFirst_name());
-        user.setLast_name(userInput.getLast_name());
-        user.setPhone_number(userInput.getPhone_number());
+        user.setFirstName(userInput.getFirst_name());
+        user.setLastName(userInput.getLast_name());
+        user.setPhoneNumber(userInput.getPhone_number());
         user.setEmail(userInput.getEmail());
         user.setPassword(passwordEncoder.encode(userInput.getPassword()));
         user.setRole(userRole);
@@ -85,24 +90,23 @@ public class AuthenticationService {
         // Create and set token
         Token token = new Token();
         token.setUser(user);
-        token.setToken(TokenGenerator.generateToken().toString());
+        token.setToken(TokenGenerator.generateToken());
         token.setType(TokenType.EMAIL_VERIFICATION);
-        token.setCreatedAt(LocalDateTime.now());
         token.setExpiredAt(LocalDateTime.now().plusMinutes(5));
         token.setIsUsed(false);
 
         try {
             User savedUser = userRepository.save(user);
-            logger.info("User successfully created: {}", savedUser.getUserId());
+            logger.info("User successfully created: {}", savedUser.getId());
 
             tokenRepository.save(token);
-            emailSender.sendWelcomeEmail(savedUser.getEmail(), savedUser.getFirst_name(), token.getToken());
+            emailSender.sendWelcomeEmail(savedUser.getEmail(), savedUser.getFirstName(), token.getToken());
 
             logger.info("Email Sent Successfully. Proceed for verification");
 
             userDetails.setEmail(savedUser.getEmail());
-            userDetails.setFirst_name(savedUser.getFirst_name());
-            userDetails.setLast_name(savedUser.getLast_name());
+            userDetails.setFirst_name(savedUser.getFirstName());
+            userDetails.setLast_name(savedUser.getLastName());
             userDetails.setIsVerified(savedUser.getIsVerified());
 
             signupResponse.setSuccess(true);
@@ -117,6 +121,70 @@ public class AuthenticationService {
     }
 
 
+    public CustomResponse<LoginResponse> login(LoginUserDto userInput) {
+        CustomResponse<LoginResponse> loginResponse = new CustomResponse<>();
+        LoginResponse loginInfo = new LoginResponse();
+
+        // Check if user exists
+        Optional<User> user = userRepository.findByEmail(userInput.getEmail());
+        if (user.isEmpty()) {
+            return ResponseUtil.createErrorResponse(loginResponse, HttpStatus.NOT_FOUND, "User Doesn't exist");
+        }
+        User requiredUser = user.get();
+
+        boolean isValidPassword = passwordEncoder.matches(userInput.getPassword(), requiredUser.getPassword());
+        if (!isValidPassword) {
+            return ResponseUtil.createErrorResponse(loginResponse, HttpStatus.UNAUTHORIZED, "Invalid Password");
+        }
+
+        if (!requiredUser.getIsVerified()) {
+            loginInfo.setUserInfo(new UserInfo(
+                    requiredUser.getId(),
+                    requiredUser.getFirstName(),
+                    requiredUser.getLastName(),
+                    requiredUser.getEmail(),
+                    false
+            ));
+
+            loginInfo.setAuthInfo(new JwtAuthenticationResponse(null));
+
+            loginResponse.setSuccess(false);
+            loginResponse.setStatusCode(HttpStatus.PRECONDITION_REQUIRED);
+            loginResponse.setMessage("Credentials accepted, but user is not verified. Verification required.");
+            loginResponse.setData(loginInfo);
+
+            return loginResponse;
+        }
+
+        try {
+            UserDetails userDetails = userDetailService.loadUserByUsername(requiredUser.getEmail());
+            String accessToken = jwtService.generateToken(userDetails);
+
+            Authentication authentication = new UsernamePasswordAuthenticationToken(
+                    userDetails, requiredUser.getPassword(), userDetails.getAuthorities()
+            );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            loginInfo.setAuthInfo(new JwtAuthenticationResponse(accessToken));
+            loginInfo.setUserInfo(new UserInfo(
+                    requiredUser.getId(),
+                    requiredUser.getFirstName(),
+                    requiredUser.getLastName(),
+                    requiredUser.getEmail(),
+                    requiredUser.getIsVerified()
+            ));
+
+            loginResponse.setSuccess(true);
+            loginResponse.setStatusCode(HttpStatus.ACCEPTED);
+            loginResponse.setMessage("User authenticated successfully");
+            loginResponse.setData(loginInfo);
+        } catch (Exception e) {
+            logger.error("Error authentication user, login(AuthenticationService.java): ", e);
+            throw new CustomException("Error in user authentication");
+        }
+        return loginResponse;
+    }
+
     public CustomResponse<VerificationResponse> verify(VerifyUserDto userInput) {
         CustomResponse<VerificationResponse> verificationResponse = new CustomResponse<>();
         VerificationResponse verifyInfo = new VerificationResponse();
@@ -124,7 +192,7 @@ public class AuthenticationService {
         // Check if user exists
         Optional<User> user = userRepository.findByEmail(userInput.getEmail());
         if (user.isEmpty()) {
-            return ResponseUtil.createErrorResponse(verificationResponse, HttpStatus.NOT_FOUND, "User Doesn't exist");
+            return ResponseUtil.createErrorResponse(verificationResponse, HttpStatus.NOT_FOUND, "User doesn't exist");
         }
         User requiredUser = user.get();
 
@@ -169,9 +237,9 @@ public class AuthenticationService {
             verifyInfo.setAuthInfo(new JwtAuthenticationResponse(accessToken));
             verifyInfo.setUser(
                     new UserInfo(
-                            savedUser.getUserId(),
-                            savedUser.getFirst_name(),
-                            savedUser.getLast_name(),
+                            savedUser.getId(),
+                            savedUser.getFirstName(),
+                            savedUser.getLastName(),
                             savedUser.getEmail(),
                             savedUser.getIsVerified()
                     )
@@ -182,7 +250,7 @@ public class AuthenticationService {
             verificationResponse.setMessage("Verification Successful");
             verificationResponse.setData(verifyInfo);
 
-            logger.info("Verification Successful for user: {}", requiredUser.getUserId());
+            logger.info("Verification Successful for user: {}", requiredUser.getId());
         } catch (Exception e) {
             logger.error("Error in verify (AuthenticationService.java): ", e);
             throw new CustomException("Error in user verification");
@@ -190,67 +258,49 @@ public class AuthenticationService {
         return verificationResponse;
     }
 
-    public CustomResponse<LoginResponse> login (LoginUserDto userInput) {
-        CustomResponse<LoginResponse> loginResponse = new CustomResponse<>();
-        LoginResponse loginInfo = new LoginResponse();
+    public CustomResponse<?> resendOtp (ResendOtpDto resendOtpDto) {
+        CustomResponse<?> response = new CustomResponse<>();
 
-        // Check if user exists
-        Optional<User> user = userRepository.findByEmail(userInput.getEmail());
-        if (user.isEmpty()) {
-            return ResponseUtil.createErrorResponse(loginResponse, HttpStatus.NOT_FOUND, "User Doesn't exist");
+        Optional<User> userOptional = userRepository.findByEmail(resendOtpDto.getUserEmail());
+        if (userOptional.isEmpty()) {
+            return ResponseUtil.createErrorResponse(response, HttpStatus.NOT_FOUND, "user not found");
         }
-        User requiredUser = user.get();
+        User requiredUser = userOptional.get();
 
-        boolean isValidPassword = passwordEncoder.matches(userInput.getPassword(), requiredUser.getPassword());
-        if (!isValidPassword) {
-            return ResponseUtil.createErrorResponse(loginResponse, HttpStatus.UNAUTHORIZED, "Invalid Password");
-        }
 
-        if (!requiredUser.getIsVerified()) {
-            loginInfo.setUserInfo(new UserInfo(
-                    requiredUser.getUserId(),
-                    requiredUser.getFirst_name(),
-                    requiredUser.getLast_name(),
-                    requiredUser.getEmail(),
-                    false
-            ));
+        //TODO Check out logic for this resend token method
 
-            loginInfo.setAuthInfo(new JwtAuthenticationResponse(null));
+        Optional<Token> existingToken = findActiveTokenByUser(requiredUser.getId(), TokenType.EMAIL_VERIFICATION);
 
-            loginResponse.setSuccess(false);
-            loginResponse.setStatusCode(HttpStatus.PRECONDITION_REQUIRED);
-            loginResponse.setMessage("Credentials accepted, but user is not verified. Verification required.");
-            loginResponse.setData(loginInfo);
-
-            return loginResponse;
-        }
+        Token token  = new Token();
+        token.setUser(userOptional.get());
+        token.setType(TokenType.EMAIL_VERIFICATION);
+        token.setToken(TokenGenerator.generateToken());
+        token.setExpiredAt(LocalDateTime.now().plusMinutes(5));
+        token.setIsUsed(false);
 
         try {
-            UserDetails userDetails = userDetailService.loadUserByUsername(requiredUser.getEmail());
-            String accessToken = jwtService.generateToken(userDetails);
+            tokenRepository.save(token);
 
-            Authentication authentication = new UsernamePasswordAuthenticationToken(
-                    userDetails, requiredUser.getPassword(), userDetails.getAuthorities()
-            );
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            emailSender.sendEmail(requiredUser.getEmail(), requiredUser.getFirstName(), token.getToken(), EmailType.EMAIL_VERIFICATION);
 
-            loginInfo.setAuthInfo(new JwtAuthenticationResponse(accessToken));
-            loginInfo.setUserInfo(new UserInfo(
-                    requiredUser.getUserId(),
-                    requiredUser.getFirst_name(),
-                    requiredUser.getLast_name(),
-                    requiredUser.getEmail(),
-                    requiredUser.getIsVerified()
-            ));
-
-            loginResponse.setSuccess(true);
-            loginResponse.setStatusCode(HttpStatus.ACCEPTED);
-            loginResponse.setMessage("User authenticated successfully");
-            loginResponse.setData(loginInfo);
+            response.setSuccess(true);
+            response.setStatusCode(HttpStatus.OK);
+            response.setMessage("Otp Sent. Verify you account to proceed.");
         } catch (Exception e) {
-            logger.error("Error authentication user, login(AuthenticationService.java): ", e);
-            throw new CustomException("Error in user authentication");
+            logger.error("Error sending new otp", e);
+            throw new CustomException("Error sending new otp", "500");
         }
-        return loginResponse;
+
+        return response;
+    }
+
+    private Optional<Token> findActiveTokenByUser(UUID userId, TokenType type) {
+        return tokenRepository.findFirstByUser_IdAndTypeAndIsUsedFalseAndExpiredAtAfter(
+                userId, type, LocalDateTime.now());
+    }
+
+    private Token getCorrectToken(String email, EmailType emailType) {
+
     }
 }

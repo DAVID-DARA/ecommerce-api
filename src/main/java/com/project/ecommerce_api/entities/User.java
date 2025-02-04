@@ -24,13 +24,13 @@ public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(nullable = false, updatable = false, unique = true)
-    private UUID userId;
+    private UUID id;
 
     @Column(nullable = false)
-    private String first_name;
+    private String firstName;
 
     @Column(nullable = false)
-    private String last_name;
+    private String lastName;
 
     @Email
     @Column(nullable = false, unique = true, updatable = false)
@@ -39,12 +39,15 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
 
-    @OneToOne(cascade = CascadeType.REMOVE)
+    @ManyToOne()
     @JoinColumn(name = "role_id", referencedColumnName = "id", nullable = false)
     private Role role;
 
     @Column(unique = true, nullable = false)
-    private String phone_number;
+    private String phoneNumber;
+
+    @Column(nullable = false)
+    private Boolean isVerified;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -52,9 +55,6 @@ public class User implements UserDetails {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
-
-    @Column(nullable = false)
-    private Boolean isVerified;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

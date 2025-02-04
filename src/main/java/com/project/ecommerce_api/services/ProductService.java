@@ -7,10 +7,9 @@ import com.project.ecommerce_api.exceptions.CustomException;
 import com.project.ecommerce_api.exceptions.ResourceNotFoundException;
 import com.project.ecommerce_api.helpers.CloudinaryService;
 import com.project.ecommerce_api.helpers.ResponseUtil;
-import com.project.ecommerce_api.models.authDto.response.CustomResponse;
+import com.project.ecommerce_api.models.auth.response.CustomResponse;
 import com.project.ecommerce_api.models.product.CreateProductDto;
 import com.project.ecommerce_api.models.product.ProductInfo;
-import com.project.ecommerce_api.models.product.UpdateProductDto;
 import com.project.ecommerce_api.repositories.CategoryRepository;
 import com.project.ecommerce_api.repositories.ProductImageRepository;
 import com.project.ecommerce_api.repositories.ProductRepository;
@@ -82,10 +81,8 @@ public class ProductService {
         ProductInfo productInfo;
 
         // Check if category exists
-        Optional<Category> categoryOptional = categoryRepository.findById(createProductDto.getCategoryId());
-        if (categoryOptional.isEmpty()) {
-            return ResponseUtil.createErrorResponse(response, HttpStatus.PRECONDITION_REQUIRED, "Category not found");
-        }
+        Category category = categoryRepository.findById(createProductDto.getCategoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
 
         //Check if product exists
         Optional<Product> productOptional = productRepository.findByName(createProductDto.getName());
@@ -106,13 +103,12 @@ public class ProductService {
         product.setDescription(createProductDto.getDescription());
         product.setPrice(createProductDto.getPrice());
         product.setStockQuantity(createProductDto.getStockQuantity());
-        product.setCategory(categoryOptional.get());
+        product.setCategory(category);
 
-        if (product.getStockQuantity() == 0) {
+        if (product.getStockQuantity() == 0)
             product.setStatus(ProductStatus.OUT_OF_STOCK);
-        } else if (product.getStockQuantity() >= 1) {
+        else if (product.getStockQuantity() >= 1)
             product.setStatus(ProductStatus.AVAILABLE);
-        }
 
         try {
             String productImageUrl = cloudinaryService.uploadFile(createProductDto.getFile());
@@ -122,7 +118,6 @@ public class ProductService {
             productImage.setAltText(createProductDto.getAltText());
 
             Product savedProduct = productRepository.save(product);
-            productImageRepository.save(productImage);
 
             productInfo = getProductInfo(savedProduct);
             response.setSuccess(true);

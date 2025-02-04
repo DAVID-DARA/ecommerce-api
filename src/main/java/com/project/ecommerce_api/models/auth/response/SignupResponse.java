@@ -1,4 +1,4 @@
-package com.project.ecommerce_api.models.authDto.response;
+package com.project.ecommerce_api.models.auth.response;
 
 import lombok.Data;
 

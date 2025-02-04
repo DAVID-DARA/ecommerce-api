@@ -1,37 +1,37 @@
 package com.project.ecommerce_api.entities;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.hibernate.annotations.CreationTimestamp;
 
-import java.time.LocalDate;
 import java.util.UUID;
 
 @Getter
 @Setter
 @ToString
 @Entity
-@Table
-public class ProductImage {
+@Table(name = "CartItem")
+public class CartItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(nullable = false, unique = true, updatable = false)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "product_id", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "cart_id", referencedColumnName = "id", updatable = false, nullable = false)
+    private Cart cart;
+
+    @ManyToOne
+    @JoinColumn(name = "product_id", referencedColumnName = "id", nullable = false)
     private Product product;
 
     @Column(nullable = false)
-    private String imageUrl;
+    @Min(1)
+    private Integer quantity;
 
     @Column(nullable = false)
-    private String altText;
-
-    @CreationTimestamp
-    @Column(nullable = false, updatable = false)
-    private LocalDate dateAdded;
+    private Double price;
 }
