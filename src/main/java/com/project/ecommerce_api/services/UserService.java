@@ -3,6 +3,7 @@ package com.project.ecommerce_api.services;
 import com.project.ecommerce_api.entities.User;
 import com.project.ecommerce_api.exceptions.CustomException;
 import com.project.ecommerce_api.helpers.ResponseUtil;
+import com.project.ecommerce_api.helpers.SecurityUtil;
 import com.project.ecommerce_api.models.user.UpdateUserProfileDto;
 import com.project.ecommerce_api.models.UserInfo;
 import com.project.ecommerce_api.models.auth.response.CustomResponse;
@@ -22,16 +23,16 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final SecurityUtil securityUtil;
+
 
     private final static Logger logger = LoggerFactory.getLogger(UserService.class);
 
-    public CustomResponse<UserInfo> getUserDetails (UUID id) {
+    public CustomResponse<UserInfo> getUserDetails () {
         CustomResponse<UserInfo> userResponse = new CustomResponse<>();
+        UUID userId = securityUtil.getUserId();
+        Optional<User> userOptional = userRepository.findById(userId);
 
-        Optional<User> userOptional = userRepository.findById(id);
-        if (userOptional.isEmpty()) {
-            return ResponseUtil.createErrorResponse(userResponse, HttpStatus.NOT_FOUND, "user not found");
-        }
         User user = userOptional.get();
 
         UserInfo userInfo = UserInfo.builder()
@@ -49,19 +50,19 @@ public class UserService {
         return userResponse;
     }
 
-    public CustomResponse<UserInfo> updateUser (UUID id, UpdateUserProfileDto updateInfo) {
+    public CustomResponse<UserInfo> updateUser (UpdateUserProfileDto request) {
         CustomResponse<UserInfo> response = new CustomResponse<>();
         UserInfo updatedInfo;
 
-        Optional<User> userOptional = userRepository.findById(id);
+        Optional<User> userOptional = userRepository.findById(securityUtil.getUserId());
         if (userOptional.isEmpty()) {
             return ResponseUtil.createErrorResponse(response, HttpStatus.NOT_FOUND, "User not found");
         }
         User requiredUser = userOptional.get();
 
-        requiredUser.setFirstName(updateInfo.getFirst_name());
-        requiredUser.setLastName(updateInfo.getLast_name());
-        requiredUser.setPhoneNumber(updateInfo.getPhone_number());
+        requiredUser.setFirstName(request.getFirst_name());
+        requiredUser.setLastName(request.getLast_name());
+        requiredUser.setPhoneNumber(request.getPhone_number());
         requiredUser.setUpdatedAt(LocalDateTime.now());
 
         try {
@@ -87,27 +88,4 @@ public class UserService {
         }
         return response;
     }
-
-//    public CustomResponse<?> deleteUser (UUID id) {
-//        CustomResponse<?> response = new CustomResponse<>();
-//
-//        Optional<User> userOptional = userRepository.findByUserId(id);
-//        if (userOptional.isEmpty()) {
-//            return createErrorResponse(response, HttpStatus.CONFLICT, "User not found");
-//        }
-//
-//        try {
-//            tokenRepository.deleteAllByUser(userOptional.get());
-//            userRepository.deleteById(userOptional.get().getUserId());
-//
-//            response.setSuccess(true);
-//            response.setStatusCode(HttpStatus.OK);
-//            response.setMessage("User successfully deleted: " + userOptional.get().getUserId());
-//        } catch (Exception e) {
-//            logger.error("Error deleting user: ", e);
-//            throw new CustomException("Error deleting user");
-//        }
-//        return response;
-//    }
-
 }

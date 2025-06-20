@@ -42,18 +42,18 @@ public class CategoryService {
         return response;
     }
 
-    public CustomResponse<CategoryInfo> createCategory (CreateCategoryDto categoryDto) {
+    public CustomResponse<CategoryInfo> createCategory (CreateCategoryDto request) {
         CustomResponse<CategoryInfo> response = new CustomResponse<>();
         CategoryInfo categoryInfo;
 
-        Optional<Category> optionalCategory = categoryRepository.findByName(categoryDto.getName());
+        Optional<Category> optionalCategory = categoryRepository.findByName(request.getName());
         if (optionalCategory.isPresent()) {
             return ResponseUtil.createErrorResponse(response, HttpStatus.NOT_FOUND, "category already exists");
         }
 
         Category newCategory = new Category();
-        newCategory.setName(categoryDto.getName());
-        newCategory.setDescription(categoryDto.getDescription());
+        newCategory.setName(request.getName());
+        newCategory.setDescription(request.getDescription());
 
         try {
             Category savedCategory = categoryRepository.save(newCategory);
@@ -77,7 +77,7 @@ public class CategoryService {
         return response;
     }
 
-    public CustomResponse<CategoryInfo> updateCategory (UUID categoryId, UpdateCategoryDto updateCategoryDto) {
+    public CustomResponse<CategoryInfo> updateCategory (UUID categoryId, UpdateCategoryDto request) {
         CustomResponse<CategoryInfo> response = new CustomResponse<>();
         CategoryInfo categoryInfo;
 
@@ -87,8 +87,8 @@ public class CategoryService {
         }
         Category category = optionalCategory.get();
 
-        category.setName(updateCategoryDto.getName());
-        category.setDescription(updateCategoryDto.getDescription());
+        category.setName(request.getName());
+        category.setDescription(request.getDescription());
 
         try {
 

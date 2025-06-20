@@ -29,10 +29,11 @@ public class Role {
         private String description;
 
         @CreationTimestamp
-        @Column(updatable = false)
+        @Column(name = "created_at", updatable = false)
         private Date createdAt;
 
         @UpdateTimestamp
+        @Column(name = "updated_at")
         private Date updatedAt;
 
 }

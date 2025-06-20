@@ -1,7 +1,6 @@
 package com.project.ecommerce_api.entities;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -29,7 +28,6 @@ public class CartItem {
     private Product product;
 
     @Column(nullable = false)
-    @Min(1)
     private Integer quantity;
 
     @Column(nullable = false)

@@ -26,10 +26,10 @@ public class User implements UserDetails {
     @Column(nullable = false, updatable = false, unique = true)
     private UUID id;
 
-    @Column(nullable = false)
+    @Column(name = "first_name", nullable = false)
     private String firstName;
 
-    @Column(nullable = false)
+    @Column(name = "last_name", nullable = false)
     private String lastName;
 
     @Email
@@ -43,17 +43,18 @@ public class User implements UserDetails {
     @JoinColumn(name = "role_id", referencedColumnName = "id", nullable = false)
     private Role role;
 
-    @Column(unique = true, nullable = false)
+    @Column(name="phone_number", nullable = false)
     private String phoneNumber;
 
-    @Column(nullable = false)
-    private Boolean isVerified;
+    @Column(name = "is_verified", nullable = false)
+    private Boolean isVerified = false;
 
     @CreationTimestamp
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @Override

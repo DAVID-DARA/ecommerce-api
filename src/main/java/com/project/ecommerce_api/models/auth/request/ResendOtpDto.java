@@ -1,6 +1,6 @@
 package com.project.ecommerce_api.models.auth.request;
 
-import com.project.ecommerce_api.utilities.EmailType;
+import com.project.ecommerce_api.utilities.TokenType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -12,5 +12,5 @@ public class ResendOtpDto {
     private String userEmail;
 
     @NotBlank(message = "This field is required")
-    private EmailType emailType;
+    private TokenType tokenType;
 }

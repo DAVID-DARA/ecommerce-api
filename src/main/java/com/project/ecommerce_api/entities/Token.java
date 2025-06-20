@@ -36,12 +36,12 @@ public class    Token {
     private TokenType type;
 
     @CreationTimestamp
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "expired_at", nullable = false, updatable = false)
     private LocalDateTime expiredAt;
 
-    @Column(nullable = false)
+    @Column(name = "is_used", nullable = false)
     private Boolean isUsed = false;
 }

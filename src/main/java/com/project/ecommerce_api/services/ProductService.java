@@ -34,7 +34,6 @@ public class ProductService {
 
     private final CloudinaryService cloudinaryService;
     private static final Logger logger = LoggerFactory.getLogger(ProductService.class);
-    private final CustomUserDetailService customUserDetailService;
 
     public CustomResponse<List<ProductInfo>> getAllProducts () {
         CustomResponse<List<ProductInfo>> response = new CustomResponse<>();
@@ -76,22 +75,22 @@ public class ProductService {
     }
 
     @Transactional
-    public CustomResponse<ProductInfo> addProduct (CreateProductDto createProductDto) {
+    public CustomResponse<ProductInfo> addProduct (CreateProductDto request) {
         CustomResponse<ProductInfo> response = new CustomResponse<>();
         ProductInfo productInfo;
 
         // Check if category exists
-        Category category = categoryRepository.findById(createProductDto.getCategoryId())
+        Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
 
         //Check if product exists
-        Optional<Product> productOptional = productRepository.findByName(createProductDto.getName());
+        Optional<Product> productOptional = productRepository.findByName(request.getName());
         if (productOptional.isPresent()) {
             return ResponseUtil.createErrorResponse(response, HttpStatus.CONFLICT, "product exists");
         }
 
         //Check if image file available
-        if (createProductDto.getFile().isEmpty()) {
+        if (request.getFile().isEmpty()) {
             return ResponseUtil.createErrorResponse(response, HttpStatus.BAD_REQUEST, "No image file");
         }
 
@@ -99,10 +98,10 @@ public class ProductService {
         Product product = new Product();
         ProductImage productImage = new ProductImage();
 
-        product.setName(createProductDto.getName());
-        product.setDescription(createProductDto.getDescription());
-        product.setPrice(createProductDto.getPrice());
-        product.setStockQuantity(createProductDto.getStockQuantity());
+        product.setName(request.getName());
+        product.setDescription(request.getDescription());
+        product.setPrice(request.getPrice());
+        product.setStockQuantity(request.getStockQuantity());
         product.setCategory(category);
 
         if (product.getStockQuantity() == 0)
@@ -111,11 +110,11 @@ public class ProductService {
             product.setStatus(ProductStatus.AVAILABLE);
 
         try {
-            String productImageUrl = cloudinaryService.uploadFile(createProductDto.getFile());
+            String productImageUrl = cloudinaryService.uploadFile(request.getFile());
 
             productImage.setImageUrl(productImageUrl);
             productImage.setProduct(product);
-            productImage.setAltText(createProductDto.getAltText());
+            productImage.setAltText(request.getAltText());
 
             Product savedProduct = productRepository.save(product);
 

@@ -33,7 +33,7 @@ public class Product {
     @Column(nullable = false)
     private Double price;
 
-    @Column(nullable = false, name = "stock_quantity")
+    @Column(name = "stock_quantity", nullable = false)
     private Integer stockQuantity;
 
     @ManyToOne
@@ -41,7 +41,7 @@ public class Product {
     private Category category;
 
     @CreationTimestamp
-    @Column(nullable = false)
+    @Column(name = "date_added", nullable = false)
     private LocalDateTime dateAdded;
 
     @Enumerated(EnumType.STRING)
