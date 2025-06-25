@@ -2,7 +2,7 @@ package com.project.ecommerce_api.bootstrap;
 
 import com.project.ecommerce_api.entities.Role;
 import com.project.ecommerce_api.entities.User;
-import com.project.ecommerce_api.models.authDto.request.RegisterUserDto;
+import com.project.ecommerce_api.models.auth.request.RegisterUserDto;
 import com.project.ecommerce_api.repositories.RoleRepository;
 import com.project.ecommerce_api.repositories.UserRepository;
 import com.project.ecommerce_api.services.CustomUserDetailService;
@@ -50,9 +50,9 @@ public class AdminSeeder {
         }
 
         User user = new User();
-        user.setFirst_name(userDto.getFirst_name());
-        user.setLast_name(userDto.getLast_name());
-        user.setPhone_number(userDto.getPhone_number());
+        user.setFirstName(userDto.getFirst_name());
+        user.setLastName(userDto.getLast_name());
+        user.setPhoneNumber(userDto.getPhone_number());
         user.setEmail(userDto.getEmail());
         user.setPassword(passwordEncoder.encode(userDto.getPassword()));
         user.setIsVerified(true);
@@ -64,7 +64,7 @@ public class AdminSeeder {
         UserDetails userDetails = userDetailService.loadUserByUsername(user.getEmail());
         String token = jwtService.generateToken(userDetails);
 
-        logger.info("Super Admin: {}", admin.getUserId());
+        logger.info("Super Admin: {}", admin.getId());
         logger.info("Admin Token: {}", token);
     }
 }

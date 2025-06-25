@@ -1,0 +1,209 @@
+package com.project.ecommerce_api.services;
+
+import com.project.ecommerce_api.entities.Cart;
+import com.project.ecommerce_api.entities.CartItem;
+import com.project.ecommerce_api.entities.Product;
+import com.project.ecommerce_api.entities.User;
+import com.project.ecommerce_api.exceptions.CustomException;
+import com.project.ecommerce_api.helpers.ResponseUtil;
+import com.project.ecommerce_api.helpers.SecurityUtil;
+import com.project.ecommerce_api.models.auth.response.CustomResponse;
+import com.project.ecommerce_api.models.cart.AddToCartDto;
+import com.project.ecommerce_api.models.cart.CartDetails;
+import com.project.ecommerce_api.models.cart.CartItemResponse;
+import com.project.ecommerce_api.models.cart.CartUpdateDto;
+import com.project.ecommerce_api.repositories.CartItemRepository;
+import com.project.ecommerce_api.repositories.CartRepository;
+import com.project.ecommerce_api.repositories.ProductRepository;
+import com.project.ecommerce_api.repositories.UserRepository;
+
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class CartService {
+
+    private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
+    private final UserRepository userRepository;
+    private final ProductRepository productRepository;
+    private final SecurityUtil securityUtil;
+
+
+    private final static Logger logger = LoggerFactory.getLogger(CartService.class);
+
+    public CustomResponse<CartDetails> getCart() {
+        try {
+            CustomResponse<CartDetails> response = new CustomResponse<>();
+            Optional<User> userOptional = userRepository.findByEmail(securityUtil.getUserEmail());
+            if (userOptional.isEmpty()) {
+                return ResponseUtil.createErrorResponse(response, HttpStatus.NOT_FOUND, "User not found");
+            }
+
+            User requiredUser = userOptional.get();
+            Optional<Cart> cartOptional = cartRepository.findByUserWithItems(requiredUser);
+            if (cartOptional.isEmpty()) {
+                return ResponseUtil.createErrorResponse(response, HttpStatus.NOT_FOUND, "Cart doesn't exist");
+            }
+            Cart userCart = cartOptional.get();
+
+            CartDetails cartDetails = getCartDetails(userCart);
+
+            response.setSuccess(true);
+            response.setStatusCode(HttpStatus.FOUND);
+            response.setMessage("Cart Details");
+            response.setData(cartDetails);
+
+            return response;
+        } catch (Exception e) {
+            logger.error("500: Internal Server Error");
+            throw new CustomException("Internal Server Error");
+        }
+    }
+
+    public CustomResponse<?> addItemToCart(AddToCartDto request) {
+        CustomResponse<?> response = new CustomResponse<>();
+        try {
+            Optional<User> userOptional = userRepository.findByEmail(securityUtil.getUserEmail());
+            User currentUser = userOptional.get();
+
+            Optional<Product> productOptional = productRepository.findById(request.getProductId());
+            if (productOptional.isEmpty()) {
+                return ResponseUtil.createErrorResponse(response, HttpStatus.NOT_FOUND, "Product not found");
+            }
+            Product cartProduct = productOptional.get();
+
+            Cart userCart = getUserCart(currentUser);
+
+            CartItem cartItem = new CartItem();
+
+            cartItem.setCart(userCart);
+            cartItem.setProduct(cartProduct);
+            cartItem.setQuantity(request.getQuantity());
+            cartItem.setPrice(cartItem.getQuantity() * cartProduct.getPrice());
+
+            cartItemRepository.save(cartItem);
+            response.setSuccess(true);
+            response.setMessage(cartProduct.getId() + " added to cart.");
+            response.setStatusCode(HttpStatus.OK);
+            response.setData(null);
+        } catch (Exception e) {
+            logger.error("Internal Server Error");
+            throw new CustomException("Internal Server Error");
+        }
+
+        return response;
+    }
+
+    public CustomResponse<CartDetails> updateCart(CartUpdateDto request) {
+        CustomResponse<CartDetails> response = new CustomResponse<>();
+        try {
+            User currentUser = securityUtil.getUser();
+            if (currentUser == null) {
+                return ResponseUtil.createErrorResponse(response, HttpStatus.NOT_FOUND, "User not found");
+            }
+
+            Cart currentUserCart = getUserCart(currentUser);
+            if(currentUserCart == null) {
+                return ResponseUtil.createErrorResponse(response, HttpStatus.NOT_FOUND, "Cart not found");
+            }
+
+            Optional<CartItem> cartItemOptional = cartItemRepository.findById(request.getCartItemId());
+            if (cartItemOptional.isEmpty()) {
+                return ResponseUtil.createErrorResponse(response, HttpStatus.NOT_FOUND, "Cart Item not found");
+            }
+
+            CartItem cartItemForUpdate = cartItemOptional.get();
+            cartItemForUpdate.setQuantity(request.getQuantity());
+
+            cartItemRepository.save(cartItemForUpdate);
+
+            response.setSuccess(true);
+            response.setStatusCode(HttpStatus.OK);
+            response.setMessage("Cart updated successfully");
+            response.setData(getCartDetails(currentUserCart));
+
+            logger.info("Cart Item successfully updated: {}", cartItemForUpdate.getId());
+
+        } catch (Exception e) {
+            logger.error("Error updating cart, updateCart(CartService.java)");
+            throw new CustomException(e.getLocalizedMessage(), "500");
+        }
+        return response;
+    }
+
+
+    public CustomResponse<CartDetails> deleteCartItem(UUID id) {
+        CustomResponse<CartDetails> response = new CustomResponse<>();
+        try {
+            User currentUser = securityUtil.getUser();
+            if (currentUser == null) {
+                return ResponseUtil.createErrorResponse(response, HttpStatus.NOT_FOUND, "User not found");
+            }
+
+            Cart currentUserCart = getUserCart(currentUser);
+            if(currentUserCart == null) {
+                return ResponseUtil.createErrorResponse(response, HttpStatus.NOT_FOUND, "Cart not found");
+            }
+
+            Optional<CartItem> cartItemOptional = cartItemRepository.findById(id);
+            if (cartItemOptional.isEmpty()) {
+                return ResponseUtil.createErrorResponse(response, HttpStatus.NOT_FOUND, "Cart Item not found");
+            }
+
+            cartItemRepository.delete(cartItemOptional.get());
+            logger.info("CartItem successfully removed: {}", cartItemOptional.get().getId());
+
+            response.setSuccess(true);
+            response.setMessage("Cart Details");
+            response.setStatusCode(HttpStatus.OK);
+            response.setData(getCartDetails(currentUserCart));
+
+        } catch (Exception e) {
+            logger.error("Error deleting cartItem, deleteCartItem(CartService.java)");
+            throw new CustomException("InternalServerError", "500");
+        }
+
+        return response;
+    }
+
+
+
+    private Cart getUserCart (User user) {
+        Optional<Cart> cartOptional = cartRepository.findByUser(user);
+
+        return cartOptional.orElse(null);
+    }
+
+    private List<CartItemResponse> getCartItems(Cart cart) {
+        List<CartItem> cartItems = cartItemRepository.findByCart(cart);
+        return cartItems.stream()
+                .map(item -> new CartItemResponse(item.getId(), item.getProduct().getId(), item.getQuantity()))
+                .collect(Collectors.toList());
+    }
+
+    private CartItemResponse getCartItemResponse(CartItem cartItem) {
+        return CartItemResponse.builder()
+                .id(cartItem.getId())
+                .productId(cartItem.getProduct().getId())
+                .quantity(cartItem.getQuantity())
+                .build();
+    }
+
+    private CartDetails getCartDetails(Cart cart) {
+        return CartDetails.builder()
+                .cartId(cart.getId())
+                .userId(cart.getUser().getId())
+                .cartItems(getCartItems(cart))
+                .build();
+    }
+}

@@ -1,6 +1,6 @@
 package com.project.ecommerce_api.helpers;
 
-import com.project.ecommerce_api.models.authDto.response.CustomResponse;
+import com.project.ecommerce_api.models.auth.response.CustomResponse;
 import org.springframework.http.HttpStatus;
 
 public class ResponseUtil {

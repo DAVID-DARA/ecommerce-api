@@ -18,7 +18,7 @@ import java.util.Date;
 public class Role {
         @Id
         @GeneratedValue(strategy = GenerationType.AUTO)
-        @Column(nullable = false)
+        @Column(nullable = false, unique = true, updatable = false)
         private Long id;
 
         @Column(unique = true, nullable = false)
@@ -29,10 +29,11 @@ public class Role {
         private String description;
 
         @CreationTimestamp
-        @Column(updatable = false)
+        @Column(name = "created_at", updatable = false)
         private Date createdAt;
 
         @UpdateTimestamp
+        @Column(name = "updated_at")
         private Date updatedAt;
 
 }

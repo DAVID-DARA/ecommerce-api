@@ -7,10 +7,9 @@ import com.project.ecommerce_api.exceptions.CustomException;
 import com.project.ecommerce_api.exceptions.ResourceNotFoundException;
 import com.project.ecommerce_api.helpers.CloudinaryService;
 import com.project.ecommerce_api.helpers.ResponseUtil;
-import com.project.ecommerce_api.models.authDto.response.CustomResponse;
+import com.project.ecommerce_api.models.auth.response.CustomResponse;
 import com.project.ecommerce_api.models.product.CreateProductDto;
 import com.project.ecommerce_api.models.product.ProductInfo;
-import com.project.ecommerce_api.models.product.UpdateProductDto;
 import com.project.ecommerce_api.repositories.CategoryRepository;
 import com.project.ecommerce_api.repositories.ProductImageRepository;
 import com.project.ecommerce_api.repositories.ProductRepository;
@@ -35,7 +34,6 @@ public class ProductService {
 
     private final CloudinaryService cloudinaryService;
     private static final Logger logger = LoggerFactory.getLogger(ProductService.class);
-    private final CustomUserDetailService customUserDetailService;
 
     public CustomResponse<List<ProductInfo>> getAllProducts () {
         CustomResponse<List<ProductInfo>> response = new CustomResponse<>();
@@ -77,24 +75,22 @@ public class ProductService {
     }
 
     @Transactional
-    public CustomResponse<ProductInfo> addProduct (CreateProductDto createProductDto) {
+    public CustomResponse<ProductInfo> addProduct (CreateProductDto request) {
         CustomResponse<ProductInfo> response = new CustomResponse<>();
         ProductInfo productInfo;
 
         // Check if category exists
-        Optional<Category> categoryOptional = categoryRepository.findById(createProductDto.getCategoryId());
-        if (categoryOptional.isEmpty()) {
-            return ResponseUtil.createErrorResponse(response, HttpStatus.PRECONDITION_REQUIRED, "Category not found");
-        }
+        Category category = categoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
 
         //Check if product exists
-        Optional<Product> productOptional = productRepository.findByName(createProductDto.getName());
+        Optional<Product> productOptional = productRepository.findByName(request.getName());
         if (productOptional.isPresent()) {
             return ResponseUtil.createErrorResponse(response, HttpStatus.CONFLICT, "product exists");
         }
 
         //Check if image file available
-        if (createProductDto.getFile().isEmpty()) {
+        if (request.getFile().isEmpty()) {
             return ResponseUtil.createErrorResponse(response, HttpStatus.BAD_REQUEST, "No image file");
         }
 
@@ -102,27 +98,25 @@ public class ProductService {
         Product product = new Product();
         ProductImage productImage = new ProductImage();
 
-        product.setName(createProductDto.getName());
-        product.setDescription(createProductDto.getDescription());
-        product.setPrice(createProductDto.getPrice());
-        product.setStockQuantity(createProductDto.getStockQuantity());
-        product.setCategory(categoryOptional.get());
+        product.setName(request.getName());
+        product.setDescription(request.getDescription());
+        product.setPrice(request.getPrice());
+        product.setStockQuantity(request.getStockQuantity());
+        product.setCategory(category);
 
-        if (product.getStockQuantity() == 0) {
+        if (product.getStockQuantity() == 0)
             product.setStatus(ProductStatus.OUT_OF_STOCK);
-        } else if (product.getStockQuantity() >= 1) {
+        else if (product.getStockQuantity() >= 1)
             product.setStatus(ProductStatus.AVAILABLE);
-        }
 
         try {
-            String productImageUrl = cloudinaryService.uploadFile(createProductDto.getFile());
+            String productImageUrl = cloudinaryService.uploadFile(request.getFile());
 
             productImage.setImageUrl(productImageUrl);
             productImage.setProduct(product);
-            productImage.setAltText(createProductDto.getAltText());
+            productImage.setAltText(request.getAltText());
 
             Product savedProduct = productRepository.save(product);
-            productImageRepository.save(productImage);
 
             productInfo = getProductInfo(savedProduct);
             response.setSuccess(true);

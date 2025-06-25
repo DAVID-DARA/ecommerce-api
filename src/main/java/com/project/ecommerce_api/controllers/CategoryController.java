@@ -1,6 +1,6 @@
 package com.project.ecommerce_api.controllers;
 
-import com.project.ecommerce_api.models.authDto.response.CustomResponse;
+import com.project.ecommerce_api.models.auth.response.CustomResponse;
 import com.project.ecommerce_api.services.CategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/categories")
 @RequiredArgsConstructor
+@RequestMapping("/api/v1/categories")
 public class CategoryController {
 
     private final CategoryService categoryService;

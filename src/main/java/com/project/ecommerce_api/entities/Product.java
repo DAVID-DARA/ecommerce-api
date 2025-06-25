@@ -8,6 +8,7 @@ import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,7 +21,7 @@ public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false, unique = true, updatable = false)
     private UUID id;
 
     @Column(nullable = false)
@@ -32,7 +33,7 @@ public class Product {
     @Column(nullable = false)
     private Double price;
 
-    @Column(nullable = false)
+    @Column(name = "stock_quantity", nullable = false)
     private Integer stockQuantity;
 
     @ManyToOne
@@ -40,9 +41,26 @@ public class Product {
     private Category category;
 
     @CreationTimestamp
-    @Column(nullable = false)
+    @Column(name = "date_added", nullable = false)
     private LocalDateTime dateAdded;
 
     @Enumerated(EnumType.STRING)
     private ProductStatus status;
+
+    @OneToMany(
+            mappedBy = "product",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<ProductImage> productImages = new ArrayList<>();
+
+    public void addProductImage(ProductImage image) {
+        productImages.add(image);
+        image.setProduct(this);
+    }
+
+    public void removeProductImage(ProductImage image) {
+        productImages.remove(image);
+        image.setProduct(null);
+    }
 }

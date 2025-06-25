@@ -28,13 +28,16 @@ public class SecurityConfig {
     private static final String[] WHITE_LIST_URL = {
             "/api/v1/auth/signup",
             "/api/v1/auth/verify",
-            "/api/v1/auth/login"
+            "/api/v1/auth/login",
+            "/api/v1/auth/resend-otp",
+            "/api/v1/email/send"
     };
 
     private static final String[] ADMIN_AUTHORITY_URL = {
             "/api/v1/admin/categories",
-            "/api/v1/admin/categories/{id}",
-            "api/v1/admin/products"
+            "/api/v1/admin/categories/**",
+            "/api/v1/admin/products",
+            "/api/v1/admin/products/**",
     };
 
     @Bean
@@ -56,7 +59,7 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of("http://localhost:8005"));
+        configuration.setAllowedOrigins(List.of("http://localhost:5173/"));
         configuration.setAllowedMethods(List.of("GET","POST"));
         configuration.setAllowedHeaders(List.of("Authorization","Content-Type"));
 

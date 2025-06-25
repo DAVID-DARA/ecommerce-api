@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.CreationTimestamp;
 
 
 import java.time.LocalDateTime;
@@ -17,15 +18,15 @@ import java.util.UUID;
 @ToString
 @Entity
 @Table(name = "tokens")
-public class Token {
+public class    Token {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(nullable = false, updatable = false, unique = true)
-    private UUID tokenId;
+    @Column(nullable = false, updatable = false, unique = true, name = "id")
+    private UUID id;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false, updatable = false)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false, updatable = false)
     private User user;
 
     @Column(nullable = false, updatable = false)
@@ -34,11 +35,13 @@ public class Token {
     @Enumerated(EnumType.STRING)
     private TokenType type;
 
-    @Column(nullable = false, updatable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "expired_at", nullable = false, updatable = false)
     private LocalDateTime expiredAt;
 
-    private Boolean isUsed;
+    @Column(name = "is_used", nullable = false)
+    private Boolean isUsed = false;
 }

@@ -1,4 +1,4 @@
-package com.project.ecommerce_api.models.authDto.request;
+package com.project.ecommerce_api.models.auth.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

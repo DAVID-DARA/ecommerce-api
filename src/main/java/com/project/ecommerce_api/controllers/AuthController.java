@@ -1,25 +1,23 @@
 package com.project.ecommerce_api.controllers;
 
-import com.project.ecommerce_api.models.authDto.request.LoginUserDto;
-import com.project.ecommerce_api.models.authDto.request.RegisterUserDto;
-import com.project.ecommerce_api.models.authDto.request.VerifyUserDto;
-import com.project.ecommerce_api.models.authDto.response.CustomResponse;
-import com.project.ecommerce_api.models.authDto.response.LoginResponse;
-import com.project.ecommerce_api.models.authDto.response.VerificationResponse;
-import com.project.ecommerce_api.models.authDto.response.SignupResponse;
+import com.project.ecommerce_api.models.auth.request.LoginUserDto;
+import com.project.ecommerce_api.models.auth.request.RegisterUserDto;
+import com.project.ecommerce_api.models.auth.request.ResendOtpDto;
+import com.project.ecommerce_api.models.auth.request.VerifyUserDto;
+import com.project.ecommerce_api.models.auth.response.CustomResponse;
+import com.project.ecommerce_api.models.auth.response.LoginResponse;
+import com.project.ecommerce_api.models.auth.response.VerificationResponse;
+import com.project.ecommerce_api.models.auth.response.SignupResponse;
 import com.project.ecommerce_api.services.AuthenticationService;
 
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
+@RequestMapping("/api/v1/auth")
 public class AuthController {
 
     private final AuthenticationService authenticationService;
@@ -51,6 +49,17 @@ public class AuthController {
         CustomResponse<LoginResponse> response = null;
         try {
             response =  authenticationService.login(loginRequest);
+            return ResponseEntity.status(response.getStatusCode()).body(response);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+
+    @GetMapping("/resend-otp")
+    public ResponseEntity<?> resendOtp(@RequestBody ResendOtpDto resendOtpDto) {
+        CustomResponse<?> response = null;
+        try {
+            response = authenticationService.resendOtp(resendOtpDto);
             return ResponseEntity.status(response.getStatusCode()).body(response);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(response);
