@@ -132,6 +132,7 @@
 			<artifactId>cloudinary-taglib</artifactId>
 			<version>1.36.0</version>
 		</dependency>
+<!--		MESSAGING 		-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-amqp</artifactId>
@@ -141,7 +142,19 @@
 			<artifactId>spring-rabbit-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-	</dependencies>
+
+<!--		UUIDv7		-->
+		<dependency>
+			<groupId>com.github.f4b6a3</groupId>
+			<artifactId>uuid-creator</artifactId>
+			<version>5.3.2</version>
+		</dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+    </dependencies>
 
 	<build>
 		<plugins>

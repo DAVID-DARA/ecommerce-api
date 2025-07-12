@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -89,7 +90,7 @@ public class CartService {
             cartItem.setCart(userCart);
             cartItem.setProduct(cartProduct);
             cartItem.setQuantity(request.getQuantity());
-            cartItem.setPrice(cartItem.getQuantity() * cartProduct.getPrice());
+            cartItem.setPrice(cartProduct.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
 
             cartItemRepository.save(cartItem);
             response.setSuccess(true);

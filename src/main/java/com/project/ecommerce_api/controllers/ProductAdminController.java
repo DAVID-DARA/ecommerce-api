@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @RestController
@@ -25,7 +26,7 @@ public class ProductAdminController {
     public ResponseEntity<?> createProduct (@RequestParam("imageFile") MultipartFile imageFile,
                                             @RequestParam("name") String name,
                                             @RequestParam("description") String description,
-                                            @RequestParam("price") Double price,
+                                            @RequestParam("price") BigDecimal price,
                                             @RequestParam("stockQuantity") Integer stockQuantity,
                                             @RequestParam("categoryId") UUID categoryId,
                                             @RequestParam("altText") String altText)

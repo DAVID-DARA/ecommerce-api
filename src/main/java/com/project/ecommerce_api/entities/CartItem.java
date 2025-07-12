@@ -1,29 +1,27 @@
 package com.project.ecommerce_api.entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Getter
 @Setter
-@ToString
+@ToString(exclude = {"cart", "product"})
 @Entity
-@Table(name = "CartItem")
-public class CartItem {
+@Table(name = "cart_items")
+public class CartItem extends BaseEntity{
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(nullable = false, unique = true, updatable = false)
-    private UUID id;
-
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cart_id", referencedColumnName = "id", updatable = false, nullable = false)
+    @JsonBackReference
     private Cart cart;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", referencedColumnName = "id", nullable = false)
     private Product product;
 
@@ -31,5 +29,5 @@ public class CartItem {
     private Integer quantity;
 
     @Column(nullable = false)
-    private Double price;
+    private BigDecimal price;
 }

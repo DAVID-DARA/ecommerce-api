@@ -16,7 +16,7 @@ public class ProductInfo {
     private UUID id;
     private String name;
     private String description;
-    private Double price;
+    private BigDecimal price;
     private Integer stockQuantity;
     private Category category;
     private List<String> productImages;
