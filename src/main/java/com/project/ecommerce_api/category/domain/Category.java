@@ -1,5 +1,6 @@
 package com.project.ecommerce_api.category.domain;
 
+import com.project.ecommerce_api.shared.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,13 +15,9 @@ import java.util.UUID;
 @Setter
 @ToString
 @Entity
-@Table
-public class Category {
+@Table(name = "categories")
+public class Category extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(nullable = false, unique = true, updatable = false)
-    private UUID id;
 
     @Column(nullable = false, unique = true)
     private String name;
@@ -28,11 +25,4 @@ public class Category {
     @Column(nullable = false)
     private String description;
 
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updateAt;
 }

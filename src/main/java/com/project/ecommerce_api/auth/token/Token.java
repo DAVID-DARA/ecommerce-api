@@ -1,5 +1,6 @@
 package com.project.ecommerce_api.auth.token;
 
+import com.project.ecommerce_api.shared.BaseEntity;
 import com.project.ecommerce_api.shared.enums.TokenType;
 import com.project.ecommerce_api.user.domain.User;
 import jakarta.persistence.*;
@@ -16,17 +17,12 @@ import java.util.UUID;
 
 @Getter
 @Setter
-@ToString
+@ToString(exclude = "user")
 @Entity
 @Table(name = "tokens")
-public class    Token {
+public class Token extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(nullable = false, updatable = false, unique = true, name = "id")
-    private UUID id;
-
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false, updatable = false)
     private User user;
 
@@ -34,11 +30,8 @@ public class    Token {
     private String token;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private TokenType type;
-
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
 
     @Column(name = "expired_at", nullable = false, updatable = false)
     private LocalDateTime expiredAt;

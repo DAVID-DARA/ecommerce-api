@@ -1,5 +1,6 @@
 package com.project.ecommerce_api.product.domain;
 
+import com.project.ecommerce_api.shared.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,18 +12,13 @@ import java.util.UUID;
 
 @Getter
 @Setter
-@ToString
+@ToString(exclude = "product")
 @Entity
-@Table
-public class ProductImage {
+@Table(name = "product_images")
+public class ProductImage extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(nullable = false, unique = true, updatable = false)
-    private UUID id;
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "producId", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "produc_id", nullable = false)
     private Product product;
 
     @Column(name = "image_url", nullable = false)
@@ -31,7 +27,4 @@ public class ProductImage {
     @Column(name = "alt_text", nullable = false)
     private String altText;
 
-    @CreationTimestamp
-    @Column(name = "date_added", nullable = false, updatable = false)
-    private LocalDate dateAdded;
 }

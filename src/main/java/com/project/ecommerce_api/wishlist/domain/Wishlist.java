@@ -2,6 +2,7 @@ package com.project.ecommerce_api.wishlist.domain;
 
 
 import com.project.ecommerce_api.product.domain.Product;
+import com.project.ecommerce_api.shared.BaseEntity;
 import com.project.ecommerce_api.user.domain.User;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -13,19 +14,16 @@ import java.util.Set;
 
 @Getter
 @Setter
-@ToString
+@ToString(exclude = {"user", "products"})
 @Entity
-public class Wishlist {
+@Table(name = "wishlists")
+public class Wishlist extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "wishlist_products",
             joinColumns = @JoinColumn(name = "wishlist_id"),
