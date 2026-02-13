@@ -2,8 +2,6 @@ package com.project.ecommerce_api.wishlist.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.project.ecommerce_api.cart.domain.CartItem;
-import com.project.ecommerce_api.product.domain.Product;
 import com.project.ecommerce_api.shared.BaseEntity;
 import com.project.ecommerce_api.user.domain.User;
 import jakarta.persistence.*;
@@ -12,9 +10,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Getter
 @Setter

@@ -1,8 +1,6 @@
 package com.project.ecommerce_api.wishlist.service;
 
 
-import com.project.ecommerce_api.cart.domain.Cart;
-import com.project.ecommerce_api.cart.dto.CartDetails;
 import com.project.ecommerce_api.product.domain.Product;
 import com.project.ecommerce_api.product.repository.ProductRepository;
 import com.project.ecommerce_api.shared.exceptions.CustomException;
@@ -23,8 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;

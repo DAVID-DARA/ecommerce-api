@@ -1,7 +1,7 @@
 package com.project.ecommerce_api.wishlist.domain;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.project.ecommerce_api.cart.domain.Cart;
+
 import com.project.ecommerce_api.product.domain.Product;
 import com.project.ecommerce_api.shared.BaseEntity;
 

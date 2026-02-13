@@ -1,6 +1,5 @@
 package com.project.ecommerce_api.wishlist.dto;
 
-import com.project.ecommerce_api.cart.dto.CartItemResponse;
 import lombok.*;
 
 import java.util.List;

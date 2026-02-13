@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/wishlist")
 public class WishlistController {
-    private final WishlistRepository wishlistRepository;
+
     private final WishlistService wishlistService;
 
     @GetMapping
