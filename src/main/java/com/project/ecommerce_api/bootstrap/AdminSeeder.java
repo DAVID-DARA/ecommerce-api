@@ -1,17 +1,19 @@
 package com.project.ecommerce_api.bootstrap;
 
-import com.project.ecommerce_api.entities.Role;
-import com.project.ecommerce_api.entities.User;
-import com.project.ecommerce_api.models.auth.request.RegisterUserDto;
-import com.project.ecommerce_api.repositories.RoleRepository;
-import com.project.ecommerce_api.repositories.UserRepository;
-import com.project.ecommerce_api.services.CustomUserDetailService;
-import com.project.ecommerce_api.services.JwtService;
-import com.project.ecommerce_api.utilities.RoleEnum;
+
+import com.project.ecommerce_api.auth.domain.Role;
+import com.project.ecommerce_api.auth.model.request.RegisterUserDto;
+import com.project.ecommerce_api.auth.repository.RoleRepository;
+import com.project.ecommerce_api.auth.service.JwtService;
+import com.project.ecommerce_api.config.CustomUserDetailService;
+import com.project.ecommerce_api.shared.enums.RoleEnum;
+import com.project.ecommerce_api.user.domain.User;
+import com.project.ecommerce_api.user.repository.UserRepository;
+
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 
 @Component
+@Profile("dev")
 @RequiredArgsConstructor
 public class AdminSeeder {
 
@@ -68,3 +71,4 @@ public class AdminSeeder {
         logger.info("Admin Token: {}", token);
     }
 }
+

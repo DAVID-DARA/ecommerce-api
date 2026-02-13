@@ -1,14 +1,15 @@
 package com.project.ecommerce_api.bootstrap;
 
-import com.project.ecommerce_api.entities.Role;
-import com.project.ecommerce_api.repositories.RoleRepository;
-import com.project.ecommerce_api.utilities.RoleEnum;
+import com.project.ecommerce_api.auth.domain.Role;
+import com.project.ecommerce_api.auth.repository.RoleRepository;
+import com.project.ecommerce_api.shared.enums.RoleEnum;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Component
+@Profile("dev")
 @RequiredArgsConstructor
 public class RoleSeeder implements ApplicationListener<ContextRefreshedEvent> {
 
