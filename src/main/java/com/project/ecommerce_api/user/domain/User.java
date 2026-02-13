@@ -1,21 +1,17 @@
 package com.project.ecommerce_api.user.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.project.ecommerce_api.auth.domain.Role;
 import com.project.ecommerce_api.shared.BaseEntity;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
 
 @Getter
 @Setter
@@ -45,7 +41,7 @@ public class User extends BaseEntity implements UserDetails {
     private String phoneNumber;
 
     @Column(name = "is_verified", nullable = false)
-    private Boolean isVerified = false;
+    private Boolean isVerified;
 
     @Column(name = "is_locked", nullable = false)
     private Boolean isLocked = false;

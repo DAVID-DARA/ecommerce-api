@@ -3,6 +3,7 @@ package com.project.ecommerce_api.bootstrap;
 import com.project.ecommerce_api.auth.domain.Role;
 import com.project.ecommerce_api.auth.repository.RoleRepository;
 import com.project.ecommerce_api.shared.enums.RoleEnum;
+
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;

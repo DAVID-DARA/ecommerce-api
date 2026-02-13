@@ -1,6 +1,8 @@
 package com.project.ecommerce_api.wishlist.domain;
 
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.project.ecommerce_api.cart.domain.CartItem;
 import com.project.ecommerce_api.product.domain.Product;
 import com.project.ecommerce_api.shared.BaseEntity;
 import com.project.ecommerce_api.user.domain.User;
@@ -9,25 +11,23 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Getter
 @Setter
-@ToString(exclude = {"user", "products"})
+@ToString(exclude = {"user"})
 @Entity
 @Table(name = "wishlists")
 public class Wishlist extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private User user;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "wishlist_products",
-            joinColumns = @JoinColumn(name = "wishlist_id"),
-            inverseJoinColumns = @JoinColumn(name = "product_id")
-    )
-    private Set<Product> products = new HashSet<>();
+    @JsonManagedReference
+    @OneToMany(mappedBy = "wishlist", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<WishlistItem> items = new ArrayList<>();
 }

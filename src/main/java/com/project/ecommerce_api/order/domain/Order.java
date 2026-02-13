@@ -1,9 +1,9 @@
 package com.project.ecommerce_api.order.domain;
 
-
 import com.project.ecommerce_api.shared.BaseEntity;
 import com.project.ecommerce_api.shared.enums.OrderStatus;
 import com.project.ecommerce_api.user.domain.User;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,7 +11,6 @@ import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Getter
 @Setter
