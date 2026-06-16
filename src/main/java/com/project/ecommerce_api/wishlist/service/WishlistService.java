@@ -9,7 +9,11 @@ import com.project.ecommerce_api.shared.utils.ResponseUtil;
 import com.project.ecommerce_api.shared.utils.SecurityUtil;
 import com.project.ecommerce_api.user.domain.User;
 import com.project.ecommerce_api.wishlist.domain.Wishlist;
+import com.project.ecommerce_api.wishlist.domain.WishlistItem;
+import com.project.ecommerce_api.wishlist.dto.WishlistDetails;
+import com.project.ecommerce_api.wishlist.dto.WishlistItemResponse;
 import com.project.ecommerce_api.wishlist.dto.WishlistUpdateDto;
+import com.project.ecommerce_api.wishlist.repository.WishlistItemRepository;
 import com.project.ecommerce_api.wishlist.repository.WishlistRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -17,8 +21,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -26,12 +31,13 @@ import java.util.Optional;
 public class WishlistService {
 
     private final WishlistRepository wishlistRepository;
+    private final WishlistItemRepository wishlistItemRepository;
     private final SecurityUtil securityUtil;
     private final ProductRepository productRepository;
     private static final Logger logger = LoggerFactory.getLogger(WishlistService.class);
 
-    public CustomResponse<Wishlist> getUserWishlist() {
-        CustomResponse<Wishlist> response = new CustomResponse<>();
+    public CustomResponse<WishlistDetails> getUserWishlist() {
+        CustomResponse<WishlistDetails> response = new CustomResponse<>();
         try {
             User currentUser = securityUtil.getUser();
             Optional<Wishlist> wishlistOptional = wishlistRepository.findByUser(currentUser);
@@ -41,49 +47,63 @@ public class WishlistService {
             }
             Wishlist userWishlist = wishlistOptional.get();
 
+            WishlistDetails wishlistDetails = getWishlistDetails(userWishlist);
             response.setSuccess(true);
             response.setStatusCode(HttpStatus.OK);
             response.setMessage("Wishlist details");
-            response.setData(userWishlist);
+            response.setData(wishlistDetails);
         } catch (Exception e) {
-            logger.error("Error getting user wishlist");
+            logger.error("Error getting user wishlist: {}", e.getMessage());
             throw new CustomException("Error getting user wishlist, getUserWishlist(WishlistService.java)", "500");
         }
         return response;
     }
-    public CustomResponse<Wishlist> addProductToWishlist(WishlistUpdateDto wishlistUpdateDto) {
-        CustomResponse<Wishlist> response = new CustomResponse<>();
+
+    public CustomResponse<?> addProductToWishlist(WishlistUpdateDto wishlistUpdateDto) {
+        CustomResponse<?> response = new CustomResponse<>();
         try {
             User currentUser = securityUtil.getUser();
-            System.out.println(currentUser.getId());
             Optional<Wishlist> wishlistOptional = wishlistRepository.findByUser(currentUser);
             if (wishlistOptional.isEmpty()) {
                 return ResponseUtil.createErrorResponse(response, HttpStatus.NOT_FOUND, "WishlistNotFound");
             }
             Wishlist userWishlist= wishlistOptional.get();
-            if (userWishlist.getProducts() == null) {
-                userWishlist.setProducts(new HashSet<>());
-            }
 
             Optional<Product> productOptional = productRepository.findById(wishlistUpdateDto.getProductId());
             if (productOptional.isEmpty()) {
                 return ResponseUtil.createErrorResponse(response, HttpStatus.NOT_FOUND, "Product not found");
             }
             Product productForWishlist = productOptional.get();
+            WishlistItem wishlistItem = new WishlistItem();
+            wishlistItem.setWishlist(userWishlist);
+            wishlistItem.setProduct(productForWishlist);
+            wishlistItem.setPrice(productForWishlist.getPrice());
 
-
-            boolean add = userWishlist.getProducts().add(productForWishlist);
-            logger.info("save: {}", add);
-            wishlistRepository.save(userWishlist);
+            wishlistItemRepository.save(wishlistItem);
 
             response.setSuccess(true);
             response.setStatusCode(HttpStatus.OK);
             response.setMessage("Wishlist updated");
-            response.setData(userWishlist);
+            response.setData(null);
         } catch (Exception e) {
             logger.error("Error adding item to Wishlist");
             throw new CustomException("Error adding item to Wishlist, addProductToWishlist(WishlistService.java)", "500");
         }
         return response;
+    }
+
+    private List<WishlistItemResponse> getWishlistItems(Wishlist wishlist) {
+        List<WishlistItem> wishlistItems = wishlistItemRepository.findByWishlist(wishlist);
+        return wishlistItems.stream()
+                .map(item -> new WishlistItemResponse(item.getId(), item.getProduct().getId(), item.getProduct().getPrice()))
+                .collect(Collectors.toList());
+    }
+
+    private WishlistDetails getWishlistDetails (Wishlist wishlist) {
+        return WishlistDetails.builder()
+                .wishlistId(wishlist.getId())
+                .userId(wishlist.getUser().getId())
+                .wishlistItems(getWishlistItems(wishlist))
+                .build();
     }
 }

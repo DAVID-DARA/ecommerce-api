@@ -43,7 +43,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -109,7 +108,6 @@ public class AuthenticationService {
             Wishlist wishlist = new Wishlist();
 
             User savedUser = userRepository.save(user);
-            logger.info("User successfully created: {}", savedUser.getId());
 
             cart.setUser(savedUser);
             cartRepository.save(cart);
@@ -117,11 +115,10 @@ public class AuthenticationService {
             tokenRepository.save(token);
 
             wishlist.setUser(savedUser);
-            wishlist.setProducts(new HashSet<>());
             wishlistRepository.save(wishlist);
 
             emailSender.sendWelcomeEmail(savedUser.getEmail(), savedUser.getFirstName(), token.getToken());
-
+            logger.info("User successfully created: {}", savedUser.getId());
             logger.info("Email Sent Successfully. Proceed for verification");
 
             userDetails.setEmail(savedUser.getEmail());
@@ -140,7 +137,7 @@ public class AuthenticationService {
         return signupResponse;
     }
 
-
+    @Transactional
     public CustomResponse<LoginResponse> login(LoginUserDto request) {
         CustomResponse<LoginResponse> loginResponse = new CustomResponse<>();
         LoginResponse loginInfo = new LoginResponse();
@@ -157,7 +154,7 @@ public class AuthenticationService {
             return ResponseUtil.createErrorResponse(loginResponse, HttpStatus.UNAUTHORIZED, "Invalid Password");
         }
 
-        if (requiredUser.getIsVerified()) {
+        if (!requiredUser.getIsVerified()) {
             loginInfo.setUserInfo(new UserInfo(
                     requiredUser.getId(),
                     requiredUser.getFirstName(),
@@ -205,6 +202,7 @@ public class AuthenticationService {
         return loginResponse;
     }
 
+    @Transactional
     public CustomResponse<VerificationResponse> verify(VerifyUserDto request) {
         CustomResponse<VerificationResponse> verificationResponse = new CustomResponse<>();
         try {
@@ -278,6 +276,7 @@ public class AuthenticationService {
         }
         return verificationResponse;
     }
+
 
     public CustomResponse<?> resendOtp (ResendOtpDto request) {
         CustomResponse<?> response = new CustomResponse<>();

@@ -1,35 +1,29 @@
 package com.project.ecommerce_api.wishlist.domain;
 
 
-import com.project.ecommerce_api.product.domain.Product;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.project.ecommerce_api.shared.BaseEntity;
 import com.project.ecommerce_api.user.domain.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
-@ToString
+@ToString(exclude = {"user"})
 @Entity
-public class Wishlist {
+@Table(name = "wishlists")
+public class Wishlist extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private User user;
 
-    @ManyToMany
-    @JoinTable(
-            name = "wishlist_products",
-            joinColumns = @JoinColumn(name = "wishlist_id"),
-            inverseJoinColumns = @JoinColumn(name = "product_id")
-    )
-    private Set<Product> products = new HashSet<>();
+    @JsonManagedReference
+    @OneToMany(mappedBy = "wishlist", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<WishlistItem> items = new ArrayList<>();
 }

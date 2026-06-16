@@ -1,30 +1,23 @@
 package com.project.ecommerce_api.product.domain;
 
 import com.project.ecommerce_api.category.domain.Category;
+import com.project.ecommerce_api.shared.BaseEntity;
 import com.project.ecommerce_api.shared.enums.ProductStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Getter
 @Setter
-@ToString
-@Table(name = "product")
+@ToString(exclude = {"category", "productImages"})
+@Table(name = "products")
 @Entity
-public class Product {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(nullable = false, unique = true, updatable = false)
-    private UUID id;
+public class Product extends BaseEntity {
 
     @Column(nullable = false)
     private String name;
@@ -32,19 +25,15 @@ public class Product {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
     @Column(name = "stock_quantity", nullable = false)
     private Integer stockQuantity;
 
-    @ManyToOne
-    @JoinColumn(name = "category_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", referencedColumnName = "id", nullable = false)
     private Category category;
-
-    @CreationTimestamp
-    @Column(name = "date_added", nullable = false)
-    private LocalDateTime dateAdded;
 
     @Enumerated(EnumType.STRING)
     private ProductStatus status;
@@ -52,7 +41,8 @@ public class Product {
     @OneToMany(
             mappedBy = "product",
             cascade = CascadeType.ALL,
-            orphanRemoval = true
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
     )
     private List<ProductImage> productImages = new ArrayList<>();
 

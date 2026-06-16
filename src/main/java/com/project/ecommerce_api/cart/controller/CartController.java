@@ -1,7 +1,5 @@
 package com.project.ecommerce_api.cart.controller;
 
-
-
 import com.project.ecommerce_api.cart.dto.AddToCartDto;
 import com.project.ecommerce_api.cart.dto.CartDetails;
 import com.project.ecommerce_api.cart.dto.CartUpdateDto;
@@ -12,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
-
 
 @RestController
 @RequiredArgsConstructor

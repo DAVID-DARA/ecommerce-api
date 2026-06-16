@@ -182,7 +182,6 @@ public class CartService {
 
     private Cart getUserCart (User user) {
         Optional<Cart> cartOptional = cartRepository.findByUser(user);
-
         return cartOptional.orElse(null);
     }
 
