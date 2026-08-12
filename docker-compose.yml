@@ -1,0 +1,81 @@
+# Full local stack for the e-commerce API: the Spring Boot service plus its
+# PostgreSQL datasource and RabbitMQ broker.
+#
+# Secrets (JWT, Cloudinary, Mailtrap) are read from the existing .env file via
+# env_file. Host-specific values below override the .env defaults so the app
+# talks to the "postgres" and "rabbitmq" services instead of localhost.
+#
+#   docker compose up --build
+#
+# Cloudinary and Mailtrap are external SaaS and remain configured through .env.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ecommerce-postgres
+    environment:
+      POSTGRES_DB: lorem
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d lorem"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: ecommerce-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"    # AMQP
+      - "15672:15672"  # Management UI
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ecommerce-api
+    # Secrets and defaults come from .env; the values below take precedence.
+    env_file:
+      - .env
+    environment:
+      # Run the dev profile inside the stack.
+      CURRENT_PROFILE: dev
+      SERVER_PORT: 6000
+      # Point the datasource at the postgres service (overrides .env localhost).
+      DB_DEV_URL: jdbc:postgresql://postgres:5432/lorem
+      DB_DEV_USERNAME: postgres
+      DB_DEV_PASSWORD: password
+      # Point AMQP at the rabbitmq service.
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+    ports:
+      - "6000:6000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  rabbitmq-data:
