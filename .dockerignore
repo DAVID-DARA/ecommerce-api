@@ -1,0 +1,28 @@
+# Build output — always rebuilt inside the image
+target/
+build/
+
+# Local tooling / IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+.classpath
+.project
+
+# VCS
+.git/
+.gitignore
+
+# Docker artefacts (avoid recursive context)
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Docs & local notes
+*.md
+
+# Secrets are injected at runtime via env_file / environment, never baked in
+.env

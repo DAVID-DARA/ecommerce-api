@@ -1,92 +1,62 @@
 # syntax=docker/dockerfile:1
 
-# Comments are provided throughout this file to help you get started.
-# If you need more help, visit the Dockerfile reference guide at
-# https://docs.docker.com/go/dockerfile-reference/
-
-# Want to help us make this template better? Share your feedback here: https://forms.gle/ybq9Krt8jtBL3iCk7
-
 ################################################################################
-
-# Create a stage for resolving and downloading dependencies.
-FROM eclipse-temurin:17-jdk-jammy as deps
+# Stage 1 — Build the Spring Boot fat jar with the Maven wrapper.
+# Uses a full JDK. Dependencies are resolved in a cached layer so that source
+# changes don't force a full re-download on every build.
+################################################################################
+FROM eclipse-temurin:17-jdk-jammy AS build
 
 WORKDIR /build
 
-# Copy the mvnw wrapper with executable permissions.
-COPY --chmod=0755 mvnw mvnw
+# Copy the Maven wrapper first and prime the local repository. This layer is
+# only invalidated when the wrapper or the pom change, not on source edits.
+COPY --chmod=0755 mvnw ./
 COPY .mvn/ .mvn/
+COPY pom.xml ./
+RUN --mount=type=cache,target=/root/.m2 ./mvnw dependency:go-offline -B -DskipTests
 
-# Download dependencies as a separate step to take advantage of Docker's caching.
-# Leverage a cache mount to /root/.m2 so that subsequent builds don't have to
-# re-download packages.
-RUN --mount=type=bind,source=pom.xml,target=pom.xml \
-    --mount=type=cache,target=/root/.m2 ./mvnw dependency:go-offline -DskipTests
+# Copy the source and build the repackaged (executable) jar.
+COPY src/ src/
+RUN --mount=type=cache,target=/root/.m2 ./mvnw clean package -B -DskipTests
 
-################################################################################
-
-# Create a stage for building the application based on the stage with downloaded dependencies.
-# This Dockerfile is optimized for Java applications that output an uber jar, which includes
-# all the dependencies needed to run your app inside a JVM. If your app doesn't output an uber
-# jar and instead relies on an application server like Apache Tomcat, you'll need to update this
-# stage with the correct filename of your package and update the base image of the "final" stage
-# use the relevant app server, e.g., using tomcat (https://hub.docker.com/_/tomcat/) as a base image.
-FROM deps as package
-
-WORKDIR /build
-
-COPY ./src src/
-RUN --mount=type=bind,source=pom.xml,target=pom.xml \
-    --mount=type=cache,target=/root/.m2 \
-    ./mvnw package -DskipTests && \
-    mv target/$(./mvnw help:evaluate -Dexpression=project.artifactId -q -DforceStdout)-$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout).jar target/app.jar
+# Split the fat jar into Spring Boot layers so the runtime image can cache
+# dependencies separately from the fast-changing application classes.
+RUN cp target/*.jar app.jar \
+    && java -Djarmode=layertools -jar app.jar extract --destination extracted
 
 ################################################################################
-
-# Create a stage for extracting the application into separate layers.
-# Take advantage of Spring Boot's layer tools and Docker's caching by extracting
-# the packaged application into separate layers that can be copied into the final stage.
-# See Spring's docs for reference:
-# https://docs.spring.io/spring-boot/docs/current/reference/html/container-images.html
-FROM package as extract
-
-WORKDIR /build
-
-RUN java -Djarmode=layertools -jar target/app.jar extract --destination target/extracted
-
+# Stage 2 — Minimal runtime image. Only a JRE plus the extracted layers.
 ################################################################################
-
-# Create a new stage for running the application that contains the minimal
-# runtime dependencies for the application. This often uses a different base
-# image from the install or build stage where the necessary files are copied
-# from the install stage.
-#
-# The example below uses eclipse-turmin's JRE image as the foundation for running the app.
-# By specifying the "17-jre-jammy" tag, it will also use whatever happens to be the
-# most recent version of that tag when you build your Dockerfile.
-# If reproducability is important, consider using a specific digest SHA, like
-# eclipse-temurin@sha256:99cede493dfd88720b610eb8077c8688d3cca50003d76d1d539b0efc8cca72b4.
 FROM eclipse-temurin:17-jre-jammy AS final
 
-# Create a non-privileged user that the app will run under.
-# See https://docs.docker.com/go/dockerfile-user-best-practices/
+# curl is used by the container HEALTHCHECK to hit the actuator endpoint.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Run as an unprivileged user rather than root.
 ARG UID=10001
-RUN adduser \
-    --disabled-password \
-    --gecos "" \
-    --home "/nonexistent" \
-    --shell "/sbin/nologin" \
-    --no-create-home \
-    --uid "${UID}" \
-    appuser
+RUN useradd --uid "${UID}" --no-create-home --shell /usr/sbin/nologin appuser
 USER appuser
 
-# Copy the executable from the "package" stage.
-COPY --from=extract build/target/extracted/dependencies/ ./
-COPY --from=extract build/target/extracted/spring-boot-loader/ ./
-COPY --from=extract build/target/extracted/snapshot-dependencies/ ./
-COPY --from=extract build/target/extracted/application/ ./
+# Copy the Spring Boot layers in order of change-frequency (most stable first)
+# to maximise Docker layer cache hits.
+COPY --from=build /build/extracted/dependencies/ ./
+COPY --from=build /build/extracted/spring-boot-loader/ ./
+COPY --from=build /build/extracted/snapshot-dependencies/ ./
+COPY --from=build /build/extracted/application/ ./
 
-EXPOSE 4032
+# Default port matches the "dev" profile (server.port=6000). The "prod" profile
+# listens on 4032 — publish the matching port in compose / `docker run`.
+EXPOSE 6000
 
-ENTRYPOINT [ "java", "org.springframework.boot.loader.launch.JarLauncher" ]
+# Container-level health check against Spring Boot Actuator. SERVER_PORT lets
+# the check follow whichever port the active profile binds to.
+ENV SERVER_PORT=6000
+HEALTHCHECK --interval=15s --timeout=5s --start-period=60s --retries=5 \
+    CMD curl -fsS "http://localhost:${SERVER_PORT}/actuator/health" || exit 1
+
+ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]

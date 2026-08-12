@@ -55,7 +55,7 @@ public class User extends BaseEntity implements UserDetails {
 
     @Override
     public String getUsername() {
-        return email;
+        return this.email;
     }
 
     @Override
@@ -65,7 +65,7 @@ public class User extends BaseEntity implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return this.isLocked;
     }
 
     @Override
@@ -75,6 +75,6 @@ public class User extends BaseEntity implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return isVerified;
+        return this.isVerified;
     }
 }
